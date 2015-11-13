@@ -7,6 +7,7 @@
 		function QufoxClient(url) {
 			var self = this;
 			this.sessionCallbackMap = {};
+			this.joinCompleteCallbackMap = {};
 			this.statusChangedCallbackArray = [];
 			this.status = 'connecting';
 			this.socket = io.connect(url, {
@@ -61,7 +62,23 @@
 
 			this.reJoin = function () {
 				for (var sessionId in self.sessionCallbackMap) {
-					self.socketClient.join(sessionId, function () { });
+					_reJoin(sessionId);
+				}
+
+				function _reJoin(sessionId){
+					self.socketClient.join(sessionId, function(data){
+						// Get join callback list.
+						var joinCallbacks = self.joinCompleteCallbackMap[sessionId];
+						if (joinCallbacks && joinCallbacks.length){
+							for (var i = 0; i < joinCallbacks.length; ++i){
+								// call join callback.
+								if (isFunction(joinCallbacks[i])) joinCallbacks[i](data);
+							}
+
+							// remove callbackMap
+							delete self.joinCompleteCallbackMap[sessionId];
+						}
+					});
 				}
 			};
 		}
@@ -72,26 +89,44 @@
 
 		QufoxClient.prototype.subscribe =
 		QufoxClient.prototype.on =
-		QufoxClient.prototype.join = function (sessionId, callback) {
+		QufoxClient.prototype.join = function (sessionId, packetReceiveCallback, joinCompleteCallback) {
 			var self = this;
 			if (self.socket.connected) {
-				self.socketClient.join(sessionId, function () {
+				self.socketClient.join(sessionId, function (data) {
+					// Add packet receive callback
 					if (!self.sessionCallbackMap[sessionId]) self.sessionCallbackMap[sessionId] = [];
-					self.sessionCallbackMap[sessionId].push(callback);
+					self.sessionCallbackMap[sessionId].push(packetReceiveCallback);
+					// Call join complete callback
+					if (isFunction(joinCompleteCallback)) joinCompleteCallback(data);
 				});
 			}
 			else {
+				// If socket not connected, auto join next connect or reconnect event.
+				// Add packet receive callback
 				if (!self.sessionCallbackMap[sessionId]) self.sessionCallbackMap[sessionId] = [];
-				self.sessionCallbackMap[sessionId].push(callback);
+				self.sessionCallbackMap[sessionId].push(packetReceiveCallback);
+				// Add join complete callback
+				if (isFunction(joinCompleteCallback)) {
+					if (!self.joinCompleteCallbackMap[sessionId]) self.joinCompleteCallbackMap[sessionId] = [];
+					self.joinCompleteCallbackMap[sessionId].push(joinCompleteCallback);
+				}
 			}
 		};
 
 		QufoxClient.prototype.publish =
-		QufoxClient.prototype.send = function () { // sessionId, data, [echo], callback
-			if (arguments.length == 3) // non echo
-				this.socketClient.send(arguments[0], arguments[1], false, arguments[2]);
+		QufoxClient.prototype.send = function (sessionId, data) { // sessionId, data, [echo], [callback]
+			if (arguments.length == 2)
+				this.socketClient.send(sessionId, data, false);
+			else if (arguments.length == 3) {// non echo
+				if (isFunction(arguments[2])){
+					this.socketClient.send(sessionId, data, false, arguments[2]);
+				}
+				else{
+					this.socketClient.send(sessionId, data, arguments[2]);
+				}
+			}
 			else if (arguments.length == 4) // with echo parameter
-				this.socketClient.send(arguments[0], arguments[1], arguments[2], arguments[3]);
+				this.socketClient.send(sessionId, data, arguments[2], arguments[3]);
 			else
 				throw 'Argument exception.';
 		};

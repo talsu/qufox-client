@@ -1,18 +1,18 @@
 {
   "name": "qufox-client",
   "main": "qufox-client.js",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "homepage": "https://github.com/talsu/qufox-client",
   "authors": [
     "talsu <talsu84@gmail.com>"
   ],
-  "description": "qufox javascript client.",  
+  "description": "qufox javascript client.",
   "keywords": [
     "qufox",
     "chat"
   ],
    "dependencies": {
-    "socket.io-client": "~1.3.7"    
+    "socket.io-client": "~1.3.7"
   },
   "license": "BSD-3-Clause",
   "ignore": [
