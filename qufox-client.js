@@ -217,7 +217,7 @@
 		var charset = letters + letters.toUpperCase() + numbers;
 
 		function randomElement(array) {
-			return array[Math.floor(Math.random() * array.length)];
+			return array.charAt(Math.floor(Math.random() * array.length));
 		}
 
 		var result = '';
