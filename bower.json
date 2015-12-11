@@ -1,7 +1,7 @@
 {
   "name": "qufox-client",
   "main": "qufox-client.js",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "homepage": "https://github.com/talsu/qufox-client",
   "authors": [
     "talsu <talsu84@gmail.com>"
