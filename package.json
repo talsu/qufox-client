@@ -1,0 +1,30 @@
+{
+  "name": "qufox-client",
+  "version": "0.2.4",
+  "description": "qufox client.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/talsu/qufox-client.git"
+  },
+  "keywords": [
+    "qufox",
+    "chat"
+  ],
+  "author": {
+    "name": "talsu",
+    "email": "talsu84@gmail.com",
+    "url": "http://talsu.net/"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/talsu/qufox-client/issues"
+  },
+  "homepage": "https://github.com/talsu/qufox-client#readme",
+  "dependencies": {
+    "socket.io-client": "^1.3.7"
+  }
+}

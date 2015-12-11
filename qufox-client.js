@@ -1,16 +1,16 @@
 (function () {
 	"use strict";
 
-	this.Qufox = function (url) { return new QufoxClient(url || "http://qufox.com"); };
+	this.Qufox = function (url, customIO, option) { return new QufoxClient(url || "http://qufox.com", customIO, option); };
 
 	var QufoxClient = (function () {
-		function QufoxClient(url) {
+		function QufoxClient(url, customIO, option) {
 			var self = this;
 			this.sessionCallbackMap = {};
 			this.joinCompleteCallbackMap = {};
 			this.statusChangedCallbackArray = [];
 			this.status = 'connecting';
-			this.socket = io.connect(url, {
+			this.socket = (customIO || io).connect(url, option || {
 				'path': '/qufox.io',
 				'sync disconnect on unload': true,
 				'reconnection limit': 6000, //defaults Infinity
