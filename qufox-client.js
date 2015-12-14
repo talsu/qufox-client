@@ -133,25 +133,31 @@
 
 		QufoxClient.prototype.unsubscribe =
 		QufoxClient.prototype.off =
-		QufoxClient.prototype.leave = function (sessionId, callback) {
+		QufoxClient.prototype.leave = function (sessionId, packetReceiveCallback, leaveCompleteCallback) {
 			var self = this;
 			var currentMap = self.sessionCallbackMap[sessionId];
 			if (!currentMap) return;
 
 			var excludeMap = [];
-			if (callback) {
+			if (packetReceiveCallback) {
 				for (var i = 0; i < currentMap.length; ++i) {
-					if (currentMap[i] != callback) excludeMap.push(currentMap[i]);
+					if (currentMap[i] != packetReceiveCallback) excludeMap.push(currentMap[i]);
 				}
 			}
 
 			if (excludeMap.length === 0) {
 				self.socketClient.leave(sessionId, function (data) {
 					delete self.sessionCallbackMap[sessionId];
+					if (isFunction(leaveCompleteCallback)){
+						leaveCompleteCallback();
+					}
 				});
 			}
 			else {
 				self.sessionCallbackMap[sessionId] = excludeMap;
+				if (isFunction(leaveCompleteCallback)){
+					leaveCompleteCallback();
+				}
 			}
 		};
 
@@ -162,6 +168,10 @@
 			for (var sessionId in self.sessionCallbackMap) {
 				self.leave(sessionId);
 			}
+		};
+
+		QufoxClient.prototype.close = function () {
+			this.socket.close();
 		};
 
 		return QufoxClient;
