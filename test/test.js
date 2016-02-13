@@ -1,36 +1,118 @@
+var assert = require('assert');
+var async = require('async');
 
-var serverUrl = process.argv[2] || 'https://talk.talsu.net';
+describe('Qufox client Test', function(){
+  var serverUrl = 'https://talk.talsu.net';
 
-var options = {
-  'path': '/qufox.io',
-  'sync disconnect on unload': true,
-  'reconnection limit': 6000, //defaults Infinity
-  'max reconnection attempts': Infinity, // defaults to 10
-  'force new connection': true
-};
-var packetReceiveCount = 0;
-var client1 = require('../index')(serverUrl, options);
-setStatusChangedLog(client1, 'client1');
-client1.join('testSession',
-function (packet){
-  ++packetReceiveCount;
-  console.log(packetReceiveCount + ' : ' + packet);
-  if (packetReceiveCount >= 2){
-    console.log('test complete !.');
-    process.exit(0);
-  }
-}, function (){
-  console.log('join complete');
-  client1.send('testSession', 'echo complete', true);
+  var options = {
+    'path': '/qufox.io',
+    'sync disconnect on unload': true,
+    'reconnection limit': 6000, //defaults Infinity
+    'max reconnection attempts': Infinity, // defaults to 10
+    'force new connection': true
+  };
 
-  var client2 = require('../index')(serverUrl, options);
-  setStatusChangedLog(client2, 'client2');
-  client2.send('testSession', 'send complete');
-});
-
-
-function setStatusChangedLog(client, name){
-  client.onStatusChanged(function (status){
-    console.log('[status] ' + name + ' - ' + status);
+  it('Echo message', function (done){
+    this.slow(1000);
+    this.timeout(5000);
+    var sessionName = 'echoSession';
+    var testMessage = 'this is a test.';
+    var client = require('../index')(serverUrl, options);
+    client.join(sessionName, function (message){
+      assert.equal(message, testMessage);
+      client.close();
+      done();
+    }, function (){
+      client.send(sessionName, testMessage, true);
+    });
   });
-}
+
+  it('Send message', function (done){
+    this.slow(1000);
+    this.timeout(5000);
+    var sessionName = 'SendMessageSession';
+    var testMessage = 'this is a test.';
+    var readyCount = 0;
+    var receiver = require('../index')(serverUrl, options);
+
+    receiver.join(sessionName, function (message) {
+      assert.equal(message, testMessage);
+      receiver.close();
+      done();
+    }, function (){
+      var sender = require('../index')(serverUrl, options, function (){
+        sender.send(sessionName, testMessage);
+        sender.close();
+      });
+    });
+  });
+
+  it('Multiple client communication', function (done){
+    var numberOfClients = 10;
+    this.slow(numberOfClients * 500);
+    this.timeout(numberOfClients * 1000);
+    var indexs = [];
+    var clients = [];
+    for (var i = 0; i < numberOfClients; ++i) indexs.push(i);
+
+    async.each(indexs, function (index, next){
+      clients[index] = require('../index')(serverUrl, options, next);
+    }, function (err){
+      clientsCommunicationTest(clients, function(){
+        for (var i = 0; i < numberOfClients; ++i){
+          clients[i].close();
+        }
+        done();
+      });
+    });
+  });
+
+  function clientsCommunicationTest(clients, callback){
+    var sessionName = 'testSession';
+    var resultsArray = [];
+    for (var i = 0; i < clients.length; ++i){
+      clients[i].index = i;
+      resultsArray[i] = new Array(clients.length);
+      for (var j = 0; j < clients.length; ++j) {
+        resultsArray[i][j] = false;
+      }
+      resultsArray[i][i] = true;
+    }
+
+    checkResults(false);
+    var intervalJob = setInterval(function(){checkResults(false);}, 1000);
+
+    async.each(clients, function (client, next){
+      client.join(sessionName, function(clientIndex){
+        resultsArray[client.index][clientIndex] = true;
+        if (checkResults()){
+          checkResults(false);
+          clearInterval(intervalJob);
+          callback();
+        }
+      }, function (){ next(); });
+    }, function (err){
+      clients.forEach(function (client){
+        setTimeout(function(){
+          client.send(sessionName, client.index);
+        }, 500 * client.index);
+      });
+    });
+
+    function checkResults(isPrint){
+      if (isPrint) console.log('---- result array ----');
+      resultsArray.forEach(function(results){
+        var printArray = results.map(function(result){ return result ? 1 : 0; });
+        if (isPrint) console.log(printArray);
+      });
+
+      var allDone = resultsArray.every(function (results){
+        return results.every(function (result){ return result; });
+      });
+
+      if (isPrint) console.log(allDone);
+
+      return allDone;
+    }
+  }
+});

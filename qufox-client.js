@@ -1,10 +1,10 @@
 (function () {
 	"use strict";
 
-	this.Qufox = function (url, customIO, option) { return new QufoxClient(url || "http://qufox.com", customIO, option); };
+	this.Qufox = function (url, customIO, option, connectedCallback) { return new QufoxClient(url || "http://qufox.com", customIO, option, connectedCallback); };
 
 	var QufoxClient = (function () {
-		function QufoxClient(url, customIO, option) {
+		function QufoxClient(url, customIO, option, connectedCallback) {
 			var self = this;
 			this.sessionCallbackMap = {};
 			this.joinCompleteCallbackMap = {};
@@ -28,6 +28,7 @@
 					self.setStatus('connected');
 				}
 			});
+			if (isFunction(connectedCallback)) this.socket.once('connected', connectedCallback);
 			this.socket.on('connecting', function () { self.setStatus('connecting'); });
 			this.socket.on('disconnect', function () { self.setStatus('disconnect'); });
 			this.socket.on('connect_failed', function () { self.setStatus('connect_failed'); });
