@@ -9,7 +9,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
 describe('Qufox client Test', function(){
   function createClient(url, options, connectCallback){
-    return new Qufox(url, options, connectCallback);
+    return Qufox(url, options, connectCallback);
   }
 
   var serverUrl = 'https://talk.talsu.net';
