@@ -5,13 +5,16 @@
 
 	var socketIoLib = null;
 
-	// is Node.js
-	if (typeof module !== 'undefined' && module.exports) {
+	// export
+	if (typeof exports !== 'undefined') {
+		if (typeof module !== 'undefined' && module.exports) {
+			exports = module.exports = Qufox;
+		}
+		exports.Qufox = Qufox;
 		socketIoLib = require('socket.io-client');
-		module.exports = Qufox;
 	} else {
-		socketIoLib = io;
 		this.Qufox = Qufox;
+		socketIoLib = io;
 	}
 
 	var QufoxClient = (function () {
