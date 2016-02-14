@@ -1,9 +1,18 @@
-var assert = require('assert');
-var async = require('async');
+// is Node.js
+if (typeof module !== 'undefined' && module.exports) {
+  var Qufox = require('../qufox-client.js');
+  var assert = require('chai').assert;
+  var async = require('async');
+} else {
+  var assert = chai.assert;
+}
 
 describe('Qufox client Test', function(){
-  var serverUrl = 'https://talk.talsu.net';
+  function createClient(url, options, connectCallback){
+    return new Qufox(url, options, connectCallback);
+  }
 
+  var serverUrl = 'https://talk.talsu.net';
   var options = {
     'path': '/qufox.io',
     'sync disconnect on unload': true,
@@ -17,9 +26,9 @@ describe('Qufox client Test', function(){
     this.timeout(5000);
     var sessionName = 'echoSession';
     var testMessage = 'this is a test.';
-    var client = require('../index')(serverUrl, options);
+    var client = createClient(serverUrl, options);
     client.join(sessionName, function (message){
-      assert.equal(message, testMessage);
+      assert.strictEqual(message, testMessage);
       client.close();
       done();
     }, function (){
@@ -33,14 +42,14 @@ describe('Qufox client Test', function(){
     var sessionName = 'SendMessageSession';
     var testMessage = 'this is a test.';
     var readyCount = 0;
-    var receiver = require('../index')(serverUrl, options);
+    var receiver = createClient(serverUrl, options);
 
     receiver.join(sessionName, function (message) {
-      assert.equal(message, testMessage);
+      assert.strictEqual(message, testMessage);
       receiver.close();
       done();
     }, function (){
-      var sender = require('../index')(serverUrl, options, function (){
+      var sender = createClient(serverUrl, options, function (){
         sender.send(sessionName, testMessage);
         sender.close();
       });
@@ -56,7 +65,7 @@ describe('Qufox client Test', function(){
     for (var i = 0; i < numberOfClients; ++i) indexs.push(i);
 
     async.each(indexs, function (index, next){
-      clients[index] = require('../index')(serverUrl, options, next);
+      clients[index] = createClient(serverUrl, options, next);
     }, function (err){
       clientsCommunicationTest(clients, function(){
         for (var i = 0; i < numberOfClients; ++i){

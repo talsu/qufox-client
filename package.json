@@ -1,10 +1,10 @@
 {
   "name": "qufox-client",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "qufox client.",
-  "main": "index.js",
+  "main": "qufox-client.js",
   "scripts": {
-    "test": "node_modules/.bin/mocha"
+    "test": "node_modules/.bin/mocha test/test.js"
   },
   "repository": {
     "type": "git",
@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "async": "^1.5.2",
+    "chai": "^3.5.0",
     "mocha": "^2.4.5"
   }
 }

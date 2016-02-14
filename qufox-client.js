@@ -1,16 +1,27 @@
 (function () {
 	"use strict";
 
-	this.Qufox = function (url, customIO, option, connectedCallback) { return new QufoxClient(url || "http://qufox.com", customIO, option, connectedCallback); };
+	var Qufox = function (url, option, connectedCallback) { return new QufoxClient(url || "http://qufox.com", option, connectedCallback); };
+
+	var socketIoLib = null;
+
+	// is Node.js
+	if (typeof module !== 'undefined' && module.exports) {
+		socketIoLib = require('socket.io-client');
+		module.exports = Qufox;
+	} else {
+		socketIoLib = io;
+		this.Qufox = Qufox;
+	}
 
 	var QufoxClient = (function () {
-		function QufoxClient(url, customIO, option, connectedCallback) {
+		function QufoxClient(url, option, connectedCallback) {
 			var self = this;
 			this.sessionCallbackMap = {};
 			this.joinCompleteCallbackMap = {};
 			this.statusChangedCallbackArray = [];
 			this.status = 'connecting';
-			this.socket = (customIO || io).connect(url, option || {
+			this.socket = socketIoLib.connect(url, option || {
 				'path': '/qufox.io',
 				'sync disconnect on unload': true,
 				'reconnection limit': 6000, //defaults Infinity
@@ -117,7 +128,7 @@
 		QufoxClient.prototype.publish =
 		QufoxClient.prototype.send = function (sessionId, data) { // sessionId, data, [echo], [callback]
 			if (arguments.length == 2)
-				this.socketClient.send(sessionId, data, false);
+			this.socketClient.send(sessionId, data, false);
 			else if (arguments.length == 3) {// non echo
 				if (isFunction(arguments[2])){
 					this.socketClient.send(sessionId, data, false, arguments[2]);
@@ -127,9 +138,9 @@
 				}
 			}
 			else if (arguments.length == 4) // with echo parameter
-				this.socketClient.send(sessionId, data, arguments[2], arguments[3]);
+			this.socketClient.send(sessionId, data, arguments[2], arguments[3]);
 			else
-				throw 'Argument exception.';
+			throw 'Argument exception.';
 		};
 
 		QufoxClient.prototype.unsubscribe =
@@ -233,7 +244,7 @@
 
 		var result = '';
 		for (var i = 0; i < length; i++)
-			result += randomElement(charset);
+		result += randomElement(charset);
 		return result;
 	}
 
